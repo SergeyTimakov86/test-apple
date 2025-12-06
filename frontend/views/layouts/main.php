@@ -5,6 +5,7 @@
 
 use common\widgets\Alert;
 use frontend\assets\AppAsset;
+use frontend\controllers\Apple\ListAction;
 use yii\bootstrap5\Breadcrumbs;
 use yii\bootstrap5\Html;
 use yii\bootstrap5\Nav;
@@ -34,11 +35,12 @@ AppAsset::register($this);
             'class' => 'navbar navbar-expand-md navbar-dark bg-dark fixed-top',
         ],
     ]);
-    $menuItems = [
-        ['label' => 'Home', 'url' => ['/site/index']],
-    ];
+
     if (Yii::$app->user->isGuest) {
+        $menuItems[] = ['label' => 'Home', 'url' => ['/site/index']];
         $menuItems[] = ['label' => 'Signup', 'url' => ['/site/signup']];
+    } else {
+        $menuItems[] = ['label' => 'Яблочный сад', 'url' => [ListAction::route()]];
     }
 
     echo Nav::widget([
