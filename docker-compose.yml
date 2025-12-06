@@ -19,10 +19,6 @@ services:
       dockerfile: .docker/php-fpm/Dockerfile
     volumes:
       - ./:/var/www/html/:cached
-    #expose:
-    #  - "9000"
-    #command: /bin/sh -c "/bin/sh rollup.sh && /bin/sh"
-    #tty: true
     networks:
       - app
     depends_on:
