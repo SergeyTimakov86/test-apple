@@ -17,7 +17,7 @@ use yii\db\ActiveRecord;
 class AppleAR extends ActiveRecord
 {
     // секунд до гниения
-    const TIME_TO_ROT = 5 * 3600;
+    const TIME_TO_ROT = 120;
 
     /**
      * {@inheritdoc}
@@ -33,7 +33,7 @@ class AppleAR extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['color', 'created_at'], 'required'],
+            [['color', 'created_at', 'state', 'eaten_percent'], 'required'],
             [['color', 'state', 'eaten_percent', 'created_at', 'fell_at'], 'integer'],
             [['state'], 'in', 'range' => [0, 1, 2,]],
             [['eaten_percent'], 'default', 'value' => 0],
