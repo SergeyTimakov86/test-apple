@@ -1,38 +1,54 @@
-version: '3.2'
-
 services:
-
-  frontend:
-    build: frontend
+  nginx:
+    build:
+      context: .docker/nginx/
     ports:
-      - 20080:80
+      - "80:80"
     volumes:
-      # Re-use local composer cache via host-volume
-      - ~/.composer-docker/cache:/root/.composer/cache:delegated
-      # Mount source-code for development
-      - ./:/app
+      - ./:/var/www/html/:ro,cached
+      - ./.var/log/:/var/www/html/.var/log/:cached
+    networks:
+      - app
+    depends_on:
+      - app
 
-  backend:
-    build: backend
-    ports:
-      - 21080:80
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: .docker/php-fpm/Dockerfile
     volumes:
-      # Re-use local composer cache via host-volume
-      - ~/.composer-docker/cache:/root/.composer/cache:delegated
-      # Mount source-code for development
-      - ./:/app
+      - ./:/var/www/html/:cached
+    #expose:
+    #  - "9000"
+    #command: /bin/sh -c "/bin/sh rollup.sh && /bin/sh"
+    #tty: true
+    networks:
+      - app
+    depends_on:
+      db:
+        condition: service_healthy
 
-  mysql:
-    image: mysql:5.7
+  db:
+    image: mysql:9.1
+    platform: linux/x86_64
     environment:
-      - MYSQL_ROOT_PASSWORD=verysecret
-      - MYSQL_DATABASE=yii2advanced
-      - MYSQL_USER=yii2advanced
-      - MYSQL_PASSWORD=secret
+      #MYSQL_USER: ${DB_USER}
+      #MYSQL_PASSWORD: ${DB_PWD} # TODO: use secrets instead
+      MYSQL_ROOT_PASSWORD: ${DB_PWD} # Just for local development
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - ./.var/db-data:/var/lib/mysql:delegated
+    healthcheck:
+      test: ["CMD-SHELL", 'mysql --database=$$MYSQL_DATABASE --password=$$MYSQL_ROOT_PASSWORD --execute="SELECT 1 FROM information_schema.tables;" --skip-column-names -B']
+      interval: 2s
+      timeout: 10s
+      retries: 20
+    networks:
+      - app
 
-  #pgsql:
-  #  image: postgres:9.5
-  #  environment:
-  #    - POSTGRES_DB=yii2advanced
-  #    - POSTGRES_USER=yii2advanced
-  #    - POSTGRES_PASSWORD=secret
+networks:
+  app:
+    name: app
