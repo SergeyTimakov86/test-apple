@@ -17,7 +17,6 @@ final class EatAction extends BaseAction
 
     /**
      * @throws \Throwable
-     * @throws NotFoundHttpException
      */
     public function run($id): Response
     {
@@ -25,15 +24,16 @@ final class EatAction extends BaseAction
         $percent = (int) Yii::$app->request->post('percent', 0);
 
         try {
-            $apple->eat($percent);
-
-            if ($apple->eaten_percent >= 100) {
+            if (!$apple->eat($percent)) {
                 $this->flashSuccess('Яблоко полностью съедено и, как следствие, удалено');
             } else {
                 $this->flashSuccess("Откушено {$percent}% яблока");
             }
-        } catch (\Throwable $e) {
+        } catch (\DomainException $e) { // vvv TODO: get rid of these via custom error handler
             $this->flashError($e->getMessage());
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage());
+            $this->flashError('Something went wrong.');
         }
 
         return $this->redirectToUrl(ListAction::url());

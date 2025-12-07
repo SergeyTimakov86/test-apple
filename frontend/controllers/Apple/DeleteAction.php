@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace frontend\controllers\Apple;
 
+use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -16,7 +17,6 @@ final class DeleteAction extends BaseAction
 
     /**
      * @throws \Throwable
-     * @throws NotFoundHttpException
      */
     public function run($id): Response
     {
@@ -25,9 +25,11 @@ final class DeleteAction extends BaseAction
         try {
             $apple->delete();
             $this->flashSuccess('Яблоко удалено');
-        } catch (\Exception $e) {
-            // TODO: some logging
-            $this->flashError('Ошибка при удалении яблока');
+        } catch (\DomainException $e) { // vvv TODO: get rid of these via custom error handler
+            $this->flashError($e->getMessage());
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage());
+            $this->flashError('Something went wrong.');
         }
 
         return $this->redirectToUrl(ListAction::url());

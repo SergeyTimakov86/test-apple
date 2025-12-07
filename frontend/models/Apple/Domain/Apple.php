@@ -9,16 +9,49 @@ use common\models\Domain\Percentage;
 final class Apple
 {
     private bool $toDeleteCrutch = false;
+    private bool $rottedCrutch = false;
 
     private function __construct(
-        private ?AppleId $id = null,
+        private AppleId|null $id,
         private AppleState $state,
         private AppleSize $size,
         private readonly AppleColor $color,
-        private AppleFallenTimestamp $createdAt,
-        private ?AppleFallenTimestamp $fellAt = null
+        private readonly AppleCreatedTimestamp $createdAt,
+        private AppleFallenTimestamp|null $fellAt = null,
+        int $timeToRot
     ) {
+        // autotransitions
 
+        if ($this->fellAt() && $this->state() !== AppleState::ROTTEN) {
+            // TODO: use some ClockInterface as method argument, time(), randomeizers, etc.. implementations are all about Infrastructure Layer
+            $timeSinceFell = time() - $this->fellAt()->value();
+
+            if ($timeSinceFell >= $timeToRot) {
+                $this->transitState(AppleState::ROTTEN);
+                // Crutch. TODO: record events and react on them from the outside
+                $this->rottedCrutch = true;
+            }
+        }
+    }
+
+    public static function create(
+        int|null $id,
+        int $state,
+        float $size,
+        int $color,
+        int $createdAt,
+        int|null $fellAt,
+        int $timeToRot
+    ): self {
+        return new self(
+            id: $id ? AppleId::of($id) : null,
+            state: AppleState::of($state),
+            size: AppleSize::of($size),
+            color: AppleColor::of($color),
+            createdAt: AppleCreatedTimestamp::of($createdAt),
+            fellAt: $fellAt ? AppleFallenTimestamp::of($fellAt) : null,
+            timeToRot: $timeToRot,
+        );
     }
 
     public function id(): ?AppleId
@@ -41,9 +74,9 @@ final class Apple
         return $this->color;
     }
 
-    public function createdAt(): ?AppleFallenTimestamp
+    public function createdAt(): AppleCreatedTimestamp
     {
-        return $this->fellAt;
+        return $this->createdAt;
     }
 
     public function fellAt(): ?AppleFallenTimestamp
@@ -53,15 +86,19 @@ final class Apple
 
     public function eat(Percentage $percentage): self
     {
+        $idx = $this->id() ? '#' . $this->id()->value() : '';
+
         if (!$this->state->isEatable()) {
             // TODO: throw more specific exception
-            throw new \DomainException('Apple cannot be eaten.');
+            throw new \DomainException(
+                sprintf('Apple%s cannot be eaten.', $idx)
+            );
         }
 
         if ($percentage->greaterThan($left = $this->size()->percentage())) {
             // TODO: throw more specific exception
             throw new \DomainException(
-                sprintf('Cannot eat more than %d%% of apple.', $left)
+                sprintf('Cannot eat more than %d%% of apple%s.', $left->value(), $idx)
             );
         }
 
@@ -81,6 +118,11 @@ final class Apple
     public function toDeleteCrutch(): bool
     {
         return $this->toDeleteCrutch;
+    }
+
+    public function rottedCrutch(): bool
+    {
+        return $this->rottedCrutch;
     }
 
     private function transitState(AppleState $to): self

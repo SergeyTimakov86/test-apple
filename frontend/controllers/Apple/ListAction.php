@@ -3,6 +3,7 @@
 namespace frontend\controllers\Apple;
 
 use frontend\models\Apple\AppleAR;
+use frontend\models\Apple\Domain\AppleState;
 
 final class ListAction extends BaseAction
 {
@@ -17,6 +18,8 @@ final class ListAction extends BaseAction
 
         return $this->controller->render('list', [
             'apples' => $apples,
+            'secondsToRot' => \Yii::$app->params[PARAM_APPLE_SECOND_TILL_ROT],
+            'rottenStateLabel' => AppleAR::availableStates()[($s = AppleState::ROTTEN)->value()] ?? $s->name,
         ]);
     }
 }

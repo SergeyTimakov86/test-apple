@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace frontend\controllers\Apple;
 
 use frontend\models\Apple\AppleAR;
-use yii\web\NotFoundHttpException;
+use Yii;
 use yii\web\Response;
 
 final class GenerateAction extends BaseAction
@@ -24,16 +24,15 @@ final class GenerateAction extends BaseAction
 
         try {
             for ($i = 0; $i < $count; $i++) {
-                $apple = new AppleAR();
-                if (!$apple->save()) {
-                    throw new \RuntimeException();
-                }
+                new AppleAR()->save();
             }
 
             $this->flashSuccess("Создано яблок: {$count}");
+        } catch (\DomainException $e) { // vvv TODO: get rid of these via custom error handler
+            $this->flashError($e->getMessage());
         } catch (\Throwable $e) {
-            // TODO: some logging
-            $this->flashError('Ошибка при создании яблок');
+            Yii::error($e->getMessage());
+            $this->flashError('Something went wrong.');
         }
 
         return $this->redirectToUrl(ListAction::url());
