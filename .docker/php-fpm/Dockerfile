@@ -32,8 +32,4 @@ USER ${USERNAME}
 
 COPY --chown=${USERNAME}:${USERNAME} ./ $APP_HOME/
 
-#RUN composer install --no-interaction --no-autoloader --no-scripts
-#RUN composer dump-autoload --optimize
-
-
 USER root
